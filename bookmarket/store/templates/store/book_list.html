@@ -1,0 +1,8 @@
+<h1>Libros disponibles</h1>
+{% for book in books %}
+    <div>
+        <h2><a href="{% url 'book_detail' book.pk %}">{{ book.title }}</a></h2>
+        <p>{{ book.author }} - ${{ book.price }}</p>
+    </div>
+{% endfor %}
+<a href="{% url 'book_create' %}">Vender un libro</a>
