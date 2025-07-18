@@ -1,0 +1,90 @@
+{% extends 'libros/base.html' %}
+
+{% block content %}
+   {% load static %}
+    {% load widget_tweaks %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<div class="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow mt-8">
+    <div class="flex flex-col md:flex-row gap-8">
+        <!-- Imagen del libro -->
+        <div class="flex-shrink-0 w-full md:w-1/3 flex items-center justify-center">
+            {% if libro.imagen %}
+                <img src="{{ libro.imagen.url }}" alt="{{ libro.titulo }}" class="rounded-lg shadow w-full object-cover h-64">
+            {% else %}
+                <div class="flex items-center justify-center w-full h-64 bg-gray-200 rounded-lg text-gray-500 text-lg font-semibold">
+                    Sin imagen
+                </div>
+            {% endif %}
+        </div>
+        <!-- Información del libro -->
+        <div class="flex-1">
+            <h2 class="text-2xl font-bold text-indigo-700 mb-2">{{ libro.titulo }}</h2>
+            <p class="text-gray-600 mb-1">por <span class="font-semibold">{{ libro.autor }}</span></p>
+            <p class="text-green-700 font-bold text-xl mb-2">${{ libro.precio }}</p>
+            <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold mb-2
+                {% if libro.estado == 'nuevo' %}bg-green-100 text-green-800
+                {% elif libro.estado == 'usado' %}bg-yellow-100 text-yellow-800
+                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                {{ libro.get_estado_display }}
+            </span>
+            <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 mb-2">
+                {{ libro.get_genero_display }}
+            </span>
+            <p class="text-gray-500 mb-1">Vendido por: <span class="font-semibold">{{ libro.vendedor.username }}</span></p>
+            <p class="text-gray-400 mb-4 text-sm">Publicado el: {{ libro.fecha_publicacion|date:"d/m/Y" }}</p>
+            <div class="mb-4">
+                <h3 class="font-semibold text-gray-700 mb-1">Descripción</h3>
+                <p class="text-gray-700">{{ libro.descripcion }}</p>
+            </div>
+            {% if user.is_authenticated and user != libro.vendedor %}
+                <a href="#" class="inline-block bg-indigo-600 hover:bg-indigo-800 text-white font-semibold py-2 px-6 rounded-lg shadow transition">Contactar al vendedor</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Comentarios -->
+    <div class="mt-10">
+        <h3 class="text-lg font-bold text-indigo-700 mb-4">Comentarios</h3>
+        {% if user.is_authenticated %}
+            <form method="POST" class="mb-6">
+                {% csrf_token %}
+                <div class="mb-4">
+                    {{ form.texto|add_class:"w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 transition text-gray-700 bg-gray-50" }}
+                </div>
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded w-full">Publicar comentario</button>
+            </form>
+        {% else %}
+            <p class="mb-4 text-gray-600"><a href="{% url 'login' %}" class="text-indigo-700 underline">Inicia sesión</a> para dejar un comentario.</p>
+        {% endif %}
+
+        {% for comentario in libro.comentarios.all %}
+            <div class="border-b border-gray-200 pb-4 mb-4">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="font-semibold text-blue-800">{{ comentario.autor.username }}</span>
+                    <span class="text-xs text-gray-400">{{ comentario.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                </div>
+                <p class="text-gray-700">{{ comentario.texto }}</p>
+            </div>
+        {% empty %}
+            <p class="text-gray-500">No hay comentarios aún.</p>
+        {% endfor %}
+    </div>
+</div>
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<div id="mapa-tienda" class="w-full h-80 rounded-lg shadow my-8"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var map = L.map('mapa-tienda').setView([23.1136, -82.3666], 15); // Cambia las coordenadas según tu tienda
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    L.marker([23.1136, -82.3666]).addTo(map)
+        .bindPopup('Aquí está la tienda')
+        .openPopup();
+});
+</script>
+{% endblock %}
